@@ -202,6 +202,7 @@ async function resolveAccessibleChat(chatIdOrUserId, currentUserId) {
 export async function sendMessage(req, res) {
     try {
         // DEBUG
+        console.log('SENDMESSAGE CONTROLLER VERSION 2');
         console.log('sendMessage params:', req.params);
         console.log('sendMessage body:', req.body);
         console.log('sendMessage file:', req.file ? { originalname: req.file.originalname, size: req.file.size, mimetype: req.file.mimetype } : null);
@@ -239,6 +240,15 @@ export async function sendMessage(req, res) {
         let fileSize = bodyFileSize ? Number(bodyFileSize) : null;
         let attachmentType = null;
 
+        console.log('sendMessage initial attachment state:', {
+            attachmentUrl,
+            fileKey,
+            mimeType,
+            durationSeconds,
+            fileSize,
+            hasFile: Boolean(file),
+        });
+
         // 3) chat + participant check
         const chat = await prisma.chat.findFirst({
             where: {
@@ -275,6 +285,7 @@ export async function sendMessage(req, res) {
 
         // 4) FILE case: derive mime, compute duration for audio, upload with contentType
         if (file) {
+            console.log('sendMessage entering file branch');
             const maxSizeBytes = 150 * 1024 * 1024; // 150MB
             if (file.size > maxSizeBytes) return res.status(400).json({ status: 400, success: false, message: 'File too large' });
 
@@ -298,16 +309,33 @@ export async function sendMessage(req, res) {
             }
 
             // Upload to S3 and pass explicit contentType (ensure your uploadFileToS3 supports this signature)
+            console.log('sendMessage before S3 upload', {
+                originalname: file.originalname,
+                resolvedMimeType: mimeType,
+                attachmentType,
+                fileSize,
+            });
             const uploadResult = await uploadFileToS3(file, mimeType); // <-- pass mimeType
+            console.log('sendMessage after S3 upload', uploadResult);
             attachmentUrl = uploadResult.Location;
             fileKey = uploadResult.Key;
         } else if (attachmentUrl && bodyMimeType) {
+            console.log('sendMessage entering pre-uploaded attachment branch');
             // signed-upload / pre-upload case. Prefer client to include duration for audio.
             mimeType = bodyMimeType;
             attachmentType = inferAttachmentType(bodyMimeType, bodyFileKey ?? null);
             // If audio and bodyDuration missing: you can implement server-side S3 fetch+probe (costly),
             // or require client to send durationSeconds.
         }
+
+        console.log('sendMessage final attachment state before DB:', {
+            attachmentType,
+            attachmentUrl,
+            fileKey,
+            mimeType,
+            durationSeconds,
+            fileSize,
+        });
 
         // 5) DB create + chat update
         const { createdMessage, updatedChat } = await prisma.$transaction(async (tx) => {
@@ -329,6 +357,8 @@ export async function sendMessage(req, res) {
                     is_read: false,
                 },
             });
+
+            console.log('sendMessage created message payload:', createdMessage);
 
             const updatedChat = await tx.chat.update({ where: { id: chatIdInt }, data: { lastMessageId: createdMessage.id }, include: { participants: true } });
 
