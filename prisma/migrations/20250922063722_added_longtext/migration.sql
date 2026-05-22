@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `Vlog` MODIFY `video_url` LONGTEXT NULL,
+    MODIFY `thumbnail_url` LONGTEXT NULL,
+    MODIFY `fileKey` LONGTEXT NULL,
+    MODIFY `thumbnailfileKey` LONGTEXT NULL;

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `User` ADD COLUMN `isOnline` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `lastSeen` DATETIME(3) NULL;

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `Blog` MODIFY `body` LONGTEXT NOT NULL;
+
+-- AlterTable
+ALTER TABLE `ChatMessage` ADD COLUMN `isLink` INTEGER NOT NULL DEFAULT 0;

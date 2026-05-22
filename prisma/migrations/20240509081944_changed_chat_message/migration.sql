@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `ChatMessage` ADD COLUMN `isUrl` VARCHAR(191) NULL,
+    MODIFY `isLinkId` VARCHAR(191) NULL;

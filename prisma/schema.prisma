@@ -1,0 +1,499 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int            @id @default(autoincrement())
+  email             String?        @unique
+  password          String?
+  full_name         String
+  personalNumber    String?        @unique
+  bio               String?        @db.LongText
+  handle            String?        @unique
+  fcm_token         String?
+  avatar_url        String?
+  fileKey           String?
+  cover_photo_url   String?
+  coverfileKey      String?
+  token             String?
+  act_token         String?
+  isVerified        Boolean        @default(false)
+  status            Int            @default(1)
+  followers         Follow[]       @relation("Followers")
+  following         Follow[]       @relation("Following")
+  numberOfFollower  Int            @default(0)
+  numberOfFollowing Int            @default(0)
+  city              String?
+  country           String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @default(now())
+  numberOfSaves     Int            @default(0)
+  isOnline          Int            @default(0)
+  lastSeen          DateTime?
+  isPrivate         Boolean        @default(false)
+  blogs             Blog[]
+  vlogs             Vlog[]
+  posts             Post[]
+  ReactBlog         ReactBlog[]
+  BlogComment       BlogComment[]
+  SaveBlog          SaveBlog[]
+  ReactVlog         ReactVlog[]
+  CommentVlog       CommentVlog[]
+  SaveVlog          SaveVlog[]
+  SaveUsers         SaveUser[]     @relation("SavedUser")
+  CurrentUser       SaveUser[]     @relation("CurrentUser")
+  ViewVlog          ViewVlog[]
+  UserBlocked       UserBlocked[]
+  chats             Chat[]         @relation("participants")
+  ChatMessage       ChatMessage[]
+  UserSetting       UserSetting[]
+  Notification      Notification[]
+  CommentPost       CommentPost[]
+  SavePost          SavePost[]
+  Category          Category[]
+  ActiveChat        ActiveChat[]
+  UnreadCount       UnreadCount[]
+  ReactPost         ReactPost[]
+
+  ReactCommentVlog ReactCommentVlog[]
+
+  ReactCommentPost ReactCommentPost[]
+
+  ReactBlogComment ReactBlogComment[]
+
+  ReportPost ReportPost[]
+
+  ReportVlog ReportVlog[]
+
+  ReportBlog ReportBlog[]
+
+  ReportUser ReportUser[]
+}
+
+
+
+model UserBlocked {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  userBlockedId Int
+  userBlocked   User     @relation(fields: [userBlockedId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  followerId  Int
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  followingId Int
+  status      Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  // @@unique([followerId, followingId], name: "unique_followers_following")
+}
+
+model Blog {
+  id               Int           @id @default(autoincrement())
+  body             String        @db.LongText
+  title            String        @db.LongText
+  tags             String?
+  city             String?
+  image_url        String?
+  fileKey          String?
+  country          String?
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId           Int
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now())
+  numberOfLikes    Int           @default(0)
+  numberOfShares   Int           @default(0)
+  numberOfComments Int           @default(0)
+  numberOfSaves    Int           @default(0)
+  ReactBlog        ReactBlog[]
+  BlogComment      BlogComment[]
+  SaveBlog         SaveBlog[]
+
+  ReportBlog ReportBlog[]
+}
+
+model ReactBlog {
+  id             Int      @id @default(autoincrement())
+  blogId         Int
+  blog           Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model BlogComment {
+  id             Int      @id @default(autoincrement())
+  content        String?
+  blogId         Int
+  blog           Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  numberOfLikes  Int      @default(0)
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  ReactBlogComment ReactBlogComment[]
+}
+
+model Vlog {
+  id               Int           @id @default(autoincrement())
+  title            String        @db.LongText
+  description      String        @db.LongText
+  video_url        String?       @db.LongText
+  location         String?
+  fileKey          String?       @db.LongText
+  thumbnail_url    String?       @db.LongText
+  thumbnailfileKey String?       @db.LongText
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId           Int
+  numberOfLikes    Int           @default(0)
+  numberOfShares   Int           @default(0)
+  numberOfComments Int           @default(0)
+  numberOfSaves    Int           @default(0)
+  numberOfViews    Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now())
+  ReactVlog        ReactVlog[]
+  CommentVlog      CommentVlog[]
+  SaveVlog         SaveVlog[]
+  ViewVlog         ViewVlog[]
+
+  ReportVlog ReportVlog[]
+}
+
+model Post {
+  id               Int           @id @default(autoincrement())
+  caption          String        @db.LongText
+  image_url        String?
+  fileKey          String?
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId           Int
+  numberOfLikes    Int           @default(0)
+  numberOfShares   Int           @default(0)
+  numberOfComments Int           @default(0)
+  numberOfSaves    Int           @default(0)
+  location         String? 
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now())
+  CommentPost      CommentPost[]
+  SavePost         SavePost[]
+  ReactPost        ReactPost[]
+
+  ReportPost ReportPost[]
+}
+
+model CommentPost {
+  id             Int      @id @default(autoincrement())
+  content        String?
+  postId         Int
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  numberOfLikes  Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  ReactCommentPost ReactCommentPost[]
+}
+
+model SavePost {
+  id           Int      @id @default(autoincrement())
+  postId       Int
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  saveByUserId Int
+  user         User     @relation(fields: [saveByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categoryId   Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model SaveBlog {
+  id           Int      @id @default(autoincrement())
+  blogId       Int
+  blog         Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  saveByUserId Int
+  categoryId   Int?
+  user         User     @relation(fields: [saveByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model ReactVlog {
+  id             Int      @id @default(autoincrement())
+  vlogId         Int
+  vlog           Vlog     @relation(fields: [vlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model CommentVlog {
+  id             Int      @id @default(autoincrement())
+  content        String?
+  vlogId         Int
+  vlog           Vlog     @relation(fields: [vlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  numberOfLikes  Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  ReactCommentVlog ReactCommentVlog[]
+}
+
+model SaveVlog {
+  id           Int      @id @default(autoincrement())
+  vlogId       Int
+  vlog         Vlog     @relation(fields: [vlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  saveByUserId Int
+  categoryId   Int?
+  user         User     @relation(fields: [saveByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model SaveUser {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation("SavedUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  saveByUserId Int
+  saveByUser   User     @relation("CurrentUser", fields: [saveByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model ViewVlog {
+  id           Int      @id @default(autoincrement())
+  vlogId       Int
+  vlog         Vlog     @relation(fields: [vlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  viewByUserId Int
+  user         User     @relation(fields: [viewByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model Chat {
+  id            Int           @id @default(autoincrement())
+  name          String        @db.VarChar(255)
+  // isGroupChat  Boolean  @default(false)
+  lastMessage   ChatMessage?  @relation("LastMessage", fields: [lastMessageId], references: [id])
+  lastMessageId Int?          @unique
+  participants  User[]        @relation("participants")
+  // admin        User          @relation(fields: [adminId], references: [id])
+  // adminId      Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now())
+  ChatMessage   ChatMessage[] @relation("ChatMessages")
+  ActiveChat    ActiveChat[]
+  UnreadCount   UnreadCount[]
+}
+
+model ActiveChat {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model UnreadCount {
+  id          Int  @id @default(autoincrement())
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId      Int
+  chat        Chat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatId      Int
+  unreadCount Int  @default(0)
+
+  @@unique([userId, chatId], map: "userId_chatId_unique")
+}
+
+model ChatMessage {
+  id              Int      @id @default(autoincrement())
+  content         String?  @db.LongText
+  sender          User     @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderId        Int
+  chat            Chat     @relation("ChatMessages", fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatId          Int
+  lastMessageChat Chat?    @relation("LastMessage")
+  isLink          Int      @default(0)
+  isLinkId        String?
+  isUrl           String?
+  is_read         Boolean  @default(false)
+  attachmentType  String?  // "image" | "video" | "gif" | "audio" | "file"
+  attachmentUrl   String?  @db.LongText
+  fileKey         String?  // S3 key
+  thumbnailUrl    String?  @db.LongText
+  mimeType        String?
+  durationSeconds Int?
+  fileSize        Int?
+  seen            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+}
+
+model UserSetting {
+  id               Int     @id @default(autoincrement())
+  lastSeen         Boolean @default(true)
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId           Int
+  commentsAllowed  Boolean @default(true)
+  chatNotification Boolean @default(true)
+  feedNotification Boolean @default(true)
+  hideLikes        Boolean @default(false)
+  language         String  @default("sv")
+}
+
+model Notification {
+  id           Int      @id @default(autoincrement())
+  byUser       User?    @relation(fields: [byUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  byUserId     Int?
+  byAdmin      Admin?   @relation(fields: [byAdminId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  byAdminId    Int?
+  toUserId     Int
+  isRead       Boolean  @default(false)
+  content      String?
+  type         String?
+  followStatus Int      @default(0)
+  data         Json?    @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
+
+model Category {
+  id             Int    @id @default(autoincrement())
+  name           String
+  createByUserId Int
+  user           User   @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model ReactPost {
+  id             Int      @id @default(autoincrement())
+  postId         Int
+  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User     @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model ReactBlogComment {
+  id             Int         @id @default(autoincrement())
+  BlogCommentId  Int
+  BlogComment    BlogComment @relation(fields: [BlogCommentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User        @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+}
+
+model ReactCommentPost {
+  id             Int         @id @default(autoincrement())
+  CommentPostId  Int
+  CommentPost    CommentPost @relation(fields: [CommentPostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User        @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+}
+
+model ReactCommentVlog {
+  id             Int         @id @default(autoincrement())
+  CommentVlogId  Int
+  CommentVlog    CommentVlog @relation(fields: [CommentVlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createByUserId Int
+  user           User        @relation(fields: [createByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+}
+
+model ReportUser {
+  id               Int      @id @default(autoincrement())
+  reportedByUserId Int
+  reportedToUserId Int
+  reportedTo       User     @relation(fields: [reportedToUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reason           String?  @db.LongText
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ReportBlog {
+  id               Int      @id @default(autoincrement())
+  reportedByUserId Int
+  reportedToBlogId Int
+  reportedTo       Blog     @relation(fields: [reportedToBlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user             User     @relation(fields: [reportedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reason           String?  @db.LongText
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ReportVlog {
+  id               Int      @id @default(autoincrement())
+  reportedByUserId Int
+  reportedToVlogId Int
+  reportedTo       Vlog     @relation(fields: [reportedToVlogId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user             User     @relation(fields: [reportedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reason           String?  @db.LongText
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ReportPost {
+  id               Int      @id @default(autoincrement())
+  reportedByUserId Int
+  reportedToPostId Int
+  reportedTo       Post     @relation(fields: [reportedToPostId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user             User     @relation(fields: [reportedByUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reason           String?  @db.LongText
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Admin {
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  phone_no     String? @unique
+  full_name    String?
+  password     String
+  otp          String?
+  fcm_token    String?
+  token        String?
+  bankIdToggle Int     @default(1)
+
+  Notification Notification[]
+}
+
+model TermsAndConditions {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PrivacyPolicy {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
